@@ -1,0 +1,2 @@
+Adafruit CircuitPython 7.0.0-rc.1-6-g7ce3f2565-dirty on 2021-09-10; PyCubedv05 with samd51j19
+Board ID:pycubed_v05c
