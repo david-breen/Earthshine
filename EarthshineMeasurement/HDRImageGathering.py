@@ -28,11 +28,14 @@ img_fn = ["TestImages/image1.bmp",
 img_list = [cv.imread(fn) for fn in img_fn]
 
 # This is where you add the exposure times
-exposure_times = np.array([1e-6*math.pow(2, 15),
-                           1e-6*math.pow(2, 16),
-                           1e-6*math.pow(2, 17),
-                           1e-6*math.pow(2, 18),
-                           0.5], dtype=np.float32)
+exposure_times = np.array([1e-6*math.pow(2, 8),
+                           1e-6*math.pow(2, 9),
+                           1e-6*math.pow(2, 10),
+                           1e-6*math.pow(2, 11),
+                           1e-6*math.pow(2, 12),
+                           1e-6*math.pow(2, 13),
+                           1e-6*math.pow(2, 14),
+                           1e-6*math.pow(2, 15)], dtype=np.float32)
 pixel_values = np.arange(0, 256, 1)
 
 # Merge exposures to HDR image
@@ -44,7 +47,7 @@ sensor_calibration = cv.createCalibrateDebevec()
 # SetRandom=True allows the calibration to select random points around image
 # SetSamples is the number of samples that calibration will take around image
 sensor_calibration.setRandom(True)
-sensor_calibration.setSamples(100)
+sensor_calibration.setSamples(250)
 
 response_curve = sensor_calibration.process(img_list,
                                             times=exposure_times.copy())
@@ -64,7 +67,7 @@ res_mertens = merge_mertens.process(img_list)
 
 
 fig, rCurve = plt.subplots()  # Create a figure containing a single axes
-rCurve.semilogy(pixel_values, response_curve[:, 0, 0])  # Plot some data
-rCurve.set_ylabel("Calibrated Scene Intensity Value")
+rCurve.plot(pixel_values, response_curve[:, 0, 0])  # Plot some data
+rCurve.set_ylabel("Calibrated Intensity Value (Relative Irradiance)")
 rCurve.set_xlabel("Pixel Value")
 plt.show()
