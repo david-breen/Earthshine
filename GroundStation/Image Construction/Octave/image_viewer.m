@@ -1,33 +1,21 @@
 clc
 clear
+close all
+% This script takes in a text file filled with data from the camera
+% and generates an image with it
 
-B = zeros(240,320);
-C = zeros(320,320);
-count = 0;
-split = 1;
+image_width = 320;   % width of the expected image
+image_height = 240;  % height of the expected image
 
-[A] = dlmread( 'log1.txt', ',');
-disp(length(A));
+B = zeros(image_height, image_width); % Generate matrix to store the pixels
 
-#for m = 1:240
-#  C(1:300 ,m) = [A(m, 1:end) A(m+1, 1:end) A(m+2, 1:end)];
-#endfor
-q = zeros(7,100);
+[A] = dlmread( 'log1.txt', ',');  % Read the text file containing the pixels
 
-A = [A;q];
+q = zeros(7,100); % add the missing rows of data
+
+A = [A;q];   
 
 s = reshape(A',100*4,240)';
 
-
-
-for i = 1:240
-    for j = 1:320
-        count = count + 1;
-        #if count < length(A)  
-        B(j,i) = A(count);
-        #endif
-    endfor
-endfor
-
-image(s,'CDataMapping','scaled');
+image(s,'CDataMapping','scaled'); % Display the image
 colorbar;
