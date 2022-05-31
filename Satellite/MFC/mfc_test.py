@@ -8,7 +8,7 @@ from micropython import const
 
 time.sleep(5)
 
-handshake_byte = bytearray([0,1,2,3,4,5,6,7])
+handshake_byte = bytearray([0, 1, 2, 3, 4, 5, 6, 7])
 
 i2c2 = busio.I2C(board.SCL2, board.SDA2)
 
@@ -34,7 +34,7 @@ def ping_camera(addr):
                     except OSError as error:
                         pass
 
-                    if read_buffer == bytearray([9,8,7,6,5,4,3,2]):
+                    if read_buffer == bytearray([9, 8, 7, 6, 5, 4, 3, 2]):
                         rec_flag = True
                         print(read_buffer)
 
@@ -44,12 +44,10 @@ def ping_camera(addr):
             i2c2.unlock()
 
 
-
 def recieve_image(addr):
 
-
     rec_flag = False
-    img = array.array('b',[0]*320)
+    img = array.array('b', [0]*320)
 
     print('awaiting data')
     while not rec_flag:
@@ -61,9 +59,9 @@ def recieve_image(addr):
             except OSError as error:
                 pass
 
-            #if (img[100] > 0 |img[2] > 0 | img[200] > 0):
+            # if (img[100] > 0 |img[2] > 0 | img[200] > 0):
             rec_flag = True
-            #time.sleep(0.01)
+            # time.sleep(0.01)
             try:
                 i2c2.writeto(addr, handshake_byte)
             except OSError as error:
@@ -83,11 +81,9 @@ def send_line(line):
         time.sleep(2)
 
 
-
-
 while True:
 
-    send_line(bytearray([0,1,2,3,4]))
+    send_line(bytearray([0, 1, 2, 3, 4]))
 
     time.sleep(1)
 
