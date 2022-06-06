@@ -62,8 +62,8 @@ res_mertens = merge_mertens.process(img_list)
 
 # If you would like to generate an 8 bit image
 # with the data uncomment these two lines
-# res_debevec_8bit = np.clip(res_debevec*255, 0, 255).astype('uint8')
-# cv.imwrite("ldr_debevec.jpg", res_debevec_8bit)
+res_debevec_8bit = np.clip(res_debevec*255, 0, 255).astype('uint8')
+cv.imwrite("ldr_debevec.jpg", res_debevec_8bit)
 
 
 fig, rCurve = plt.subplots()  # Create a figure containing a single axes
