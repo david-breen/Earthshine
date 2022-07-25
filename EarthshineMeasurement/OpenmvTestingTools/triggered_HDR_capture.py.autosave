@@ -33,7 +33,7 @@ exposures = [math.pow(2,8),
              math.pow(2,19),    #0.5s
              math.pow(2,23),
              math.pow(2,24),
-             math.pow(2,32)]  # Last value truncates to .5s (Longst exposure time?)
+             math.pow(2,31)]  # Last value truncates to .5s (Longst exposure time?)
 
 
 # Setting the camera to triggered snapshot mode (NON VIDEO)
@@ -77,7 +77,7 @@ init_sensor()
 
 for frameTime in exposures:
     sensor_settings(frameTime)
-    capture_image(frameTime, "p"+(str)(frameTime))
+    capture_image(frameTime, "q"+(str)(frameTime))
 
 
 
