@@ -3,48 +3,52 @@ from numpy.linalg import inv
 from matplotlib import pyplot as plt
 
 
-def RK45_step(x, y, z, t, dt):
-    k1 = G(x, t)
-    k2 = G(x + 0.5*k1*dt, t + 0.5*dt)
-    k3 = G(x + 0.5*k2*dt, t + 0.5*dt)
-    k4 = G(y + k3*dt, t + dt)
+def Euler_motion(w, M, Idiag, t):
 
-    return dt * ((k1 + 2*k2 + 2*k3 + k4) / 6)
+    wdhold = np.multiply(M - np.cross(w, (np.multiply(Idiag, w))),
+                         np.linalg.inv(Idiag))
+    return wdhold
 
 
-def Euler_motion():
-    wd1 = (M1[0]-(I3[0]-I2[0])*w2[0]*w3[0]) / I1
-    wd2 = (M2[0]-(I1[0]-I3[0])*w3[0]*w1[0]) / I2
-    wd1 = (M3[0]-(I2[0]-I1[0])*w1[0]*w2[0]) / I3
+def RK45_step(w, M, Idiag, time, deltat):
 
-    return [wd1, wd2, wd3]
+    k1 = Euler_motion(w, M, Idiag, time)
+    k2 = Euler_motion(w+0.5*k1, M, Idiag, time + 0.5*deltat)
+    k3 = Euler_motion(w + 0.5*k2, M, Idiag, time + 0.5*deltat)
+    k4 = Euler_motion(w + k3*dt, M, Idiag, time + deltat)
+
+    return deltat * ((k1 + 2*k2 + 2*k3 + k4) / 6)
+
 
 # variables
-t = 0
 dt = 0.1
+time = np.arange(0, 100, dt)
 
-Itensor = np.array([[1, 0, 0],[0, 1, 0,],[0, 0, 1]])  #kg*m^2
+Itensor = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # kg*m^2
+w = np.array([0, 1, 0], float)
+O = np.array([0, 0, 0], float)
+wdot = np.array([0, 0, 0])
 
-w = np.array([[0], [0], [0]])
-wdot = np.array([[0],[0],[0]])
+thetadot = np.empty((0, 3), float)
+theta = np.empty((0, 3), float)
 
-I1 = Itensor[0, 0]
-I2 = Itensor[1, 1]
-I3 = Itensor[2, 2]
+print()
 
-w1 = np.array([])   # rad/s
-w2 = np.array([])
-w3 = np.array([])
+for t in time:
 
-wd1 = np.array([])  # rad/s^2
-wd2 = np.array([])
-wd3 = np.array([])
+    if t < 100:
 
-M1 = np.array([])   # N*m
-M2 = np.array([])
-M3 = np.array([])
+        M = np.array([0.008, 0.01, 0])   # N*m
+    else:
 
+        M = np.array([0, 0, 0])   # N*m
 
-
+    w = w + np.diag(RK45_step(w, M, Itensor, t, dt))
+    thetadot = np.append(thetadot, [w], axis=0)
+    O = O + thetadot[-1] * dt
+    theta = np.append(theta, [O], axis=0)
+    
 
 
+plt.plot(time, np.sin(theta[:, 0] * (np.pi / 2)))
+plt.show()
