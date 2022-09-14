@@ -1,6 +1,7 @@
 import numpy as np
-from numpy.linalg import inv
 from matplotlib import pyplot as plt
+import matplotlib.animation as animation
+import quaternion
 
 
 def Euler_motion(w, M, Idiag, t):
@@ -25,30 +26,37 @@ dt = 0.1
 time = np.arange(0, 100, dt)
 
 Itensor = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # kg*m^2
-w = np.array([0, 1, 0], float)
-O = np.array([0, 0, 0], float)
-wdot = np.array([0, 0, 0])
+initial_velocity = np.array([0, 1, 0], float)
+initial_attitude = np.array([0, 0, 0], float)
+velocity_mat = np.empty((0, 3), float)
+attitude_mat = np.empty((0, 3), float)
+velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
+attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
+quat = np.quaternion(1, 0, 0, 0)
 
-thetadot = np.empty((0, 3), float)
-theta = np.empty((0, 3), float)
-
-print()
 
 for t in time:
 
-    if t < 100:
+    if t < 50:
 
         M = np.array([0.008, 0.01, 0])   # N*m
     else:
 
-        M = np.array([0, 0, 0])   # N*m
+        M = np.array([-0.014, -0.02, -1])   # N*m
 
-    w = w + np.diag(RK45_step(w, M, Itensor, t, dt))
-    thetadot = np.append(thetadot, [w], axis=0)
-    O = O + thetadot[-1] * dt
-    theta = np.append(theta, [O], axis=0)
-    
+    velocity_mat = np.append(velocity_mat, [velocity_mat[-1] +
+                             np.diag(RK45_step(velocity_mat[-1],
+                                               M, Itensor, t, dt))], axis=0)
+    attitude_mat = np.append(attitude_mat,
+                             [attitude_mat[-1] + velocity_mat[-1] * dt],
+                             axis=0)
 
 
-plt.plot(time, np.sin(theta[:, 0] * (np.pi / 2)))
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='polar')
+ax.set_rmin(0)
+ax.set_rmax(1)
+
+ax.quiver(0,0,0,1, color='black', angles="xy", scale_units='xy', scale=1.)
+#plt.plot(time, (attitude_mat[1:, 0] % (np.pi * 2)))
 plt.show()

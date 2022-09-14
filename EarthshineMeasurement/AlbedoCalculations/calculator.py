@@ -29,5 +29,3 @@ phase = ((mlon.degrees - slon.degrees) % 360.0)/180
 
 print('{0:.3f}'.format(phase))
 
-
-Fel = 
