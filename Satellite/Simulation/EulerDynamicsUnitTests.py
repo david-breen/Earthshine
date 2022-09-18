@@ -2,36 +2,20 @@ from cmath import cos
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 from matplotlib import pyplot as plt
-import matplotlib.animation as animation
+from EulerDynamicsDeriver import *
 
-
-def Euler_motion(w, M, Idiag, t):
-
-	wdhold = np.matmul((M - np.cross(w,(np.matmul(Idiag, w)))),
-	                    np.linalg.inv(Idiag))
-
-	return wdhold
-
-
-def RK45_step(w, M, Idiag, time, deltat):
-
-    k1 = Euler_motion(w, M, Idiag, time)
-    k2 = Euler_motion(w+0.5*k1, M, Idiag, time + 0.5*deltat)
-    k3 = Euler_motion(w + 0.5*k2, M, Idiag, time + 0.5*deltat)
-    k4 = Euler_motion(w + k3*dt, M, Idiag, time + deltat)
-
-    return deltat * ((k1 + 2*k2 + 2*k3 + k4) / 6)
-
-
-# variables
+# Time stuff
 dt = 0.1
 time = np.arange(0, 100, dt)
 
+# initial conditions
 Itensor = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 2]])  # kg*m^2
 initial_velocity = np.array([1, 0, 1], float)
 initial_attitude = np.array([0, 0, 0], float)
 initial_inertial = np.array([[ 0, 0, 0], [ 0, 0, 0], [ 0, 0, 0]], float)
+M = np.array([0, 0, 0])
 
+# Matrix initalization
 velocity_mat = np.empty((0, 3), float)
 attitude_mat = np.empty((0, 3), float)
 inertial_mat = np.empty((0, 3, 3), float)
@@ -39,7 +23,7 @@ inertial_mat = np.empty((0, 3, 3), float)
 velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
 attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
 inertial_mat = np.append(inertial_mat, [initial_inertial], axis=0)
-M = np.array([0, 0, 0])
+
 
 
 
