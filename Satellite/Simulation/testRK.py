@@ -1,62 +1,102 @@
-import numpy as np 
-from numpy.linalg import inv
+from cmath import cos
+import numpy as np
+from scipy.spatial.transform import Rotation as R
 from matplotlib import pyplot as plt
+import matplotlib.animation as animation
 
-def F(t):
-	F = np.array([0.0,0.0])
-	if t <= 15:
-		F[0] = F0 * np.cos(omega*t)
-	else:
-		F[0] = 0.0
-	return F
 
-def G(y,t): return A_inv.dot( F(t) - B.dot(y) )
+def Euler_motion(w, M, Idiag, t):
 
-def RK4_step(y, t, dt):
-	k1 = G(y,t)
-	k2 = G(y+0.5*k1*dt, t+0.5*dt)
-	k3 = G(y+0.5*k2*dt, t+0.5*dt)
-	k4 = G(y+k3*dt, t+dt)
+	wdhold = np.matmul((M - np.cross(w,(np.matmul(Idiag, w)))),
+	                    np.linalg.inv(Idiag))
 
-	return dt * G(y,t)
-	#return dt * (k1 + 2*k2 + 2*k3 + k4) /6
+	return wdhold
+
+
+def RK45_step(w, M, Idiag, time, deltat):
+
+    k1 = Euler_motion(w, M, Idiag, time)
+    k2 = Euler_motion(w+0.5*k1, M, Idiag, time + 0.5*deltat)
+    k3 = Euler_motion(w + 0.5*k2, M, Idiag, time + 0.5*deltat)
+    k4 = Euler_motion(w + k3*dt, M, Idiag, time + deltat)
+
+    return deltat * ((k1 + 2*k2 + 2*k3 + k4) / 6)
+
 
 # variables
-m = 2.0
-k = 2.0
-c = 0.0   # critical damping = 2 * SQRT(m*k) = 4.0
+dt = 0.001
+time = np.arange(0, 100, dt)
 
-F0 = 0.0
-delta_t = 0.1
-omega = 1.0
-time = np.arange(0.0, 40.0, delta_t)
+Itensor = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 2]])  # kg*m^2
+initial_velocity = np.array([1, 0, 1], float)
+initial_attitude = np.array([0, 0, 0], float)
+initial_inertial = np.array([[ 0, 0, 0], [ 0, 0, 0], [ 0, 0, 0]], float)
 
-# initial state
-y = np.array([0,1])   # [velocity, displacement]
+velocity_mat = np.empty((0, 3), float)
+attitude_mat = np.empty((0, 3), float)
+inertial_mat = np.empty((0, 3, 3), float)
 
-A = np.array([[m,0],[0,1]])
-B = np.array([[c,k],[-1,0]])
-A_inv = inv(A)
+velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
+attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
+inertial_mat = np.append(inertial_mat, [initial_inertial], axis=0)
+#quat = np.quaternion(1, 0, 0, 0)
+M = np.array([0, 0, 0])
 
-Y = []
-force = []
+w0 = 1
 
-# time-stepping solution
+
+
+print(velocity_mat)
+print(RK45_step(velocity_mat[-1], M, Itensor, time, dt))
+
+
+
 for t in time:
-	y = y + RK4_step(y, t, delta_t) 
 
-	Y.append(y[1])
-	force.append(F(t)[0])
+    if t < 100:
 
-	KE = 0.5 * m * y[0]**2
-	PE = 0.5 * k * y[1]**2
+        M = np.array([0, 0, 0])   # N*m
+    else:
 
-	if t % 1 <= 0.01:
-		print(G(y,t))
+        M = np.array([-0.014, -0.2, -1])   # N*m
 
-# plot the result
-plt.plot(time,Y)
-plt.plot(time,force)
-plt.grid(True)
-plt.legend(['Displacement', 'Force'], loc='lower right')
+    velocity_mat = np.append(velocity_mat, [velocity_mat[-1] + 
+						    (RK45_step(velocity_mat[-1], M, Itensor, t, dt))],
+							 axis=0)
+
+    attitude_mat = np.append(attitude_mat,
+                             [velocity_mat[-1] * dt],
+                             axis=0)
+
+    #ror = R.from_euler('xyz', (attitude_mat[-1]))
+
+   
+'''
+    inertial_mat = np.append(inertial_mat,
+                             [ror.as_matrix()],
+                             axis=0)
+'''
+w1 = np.multiply(-velocity_mat[:, 1], np.cos((1-Itensor[2][2]/Itensor[0][0])*velocity_mat[:, 2]))
+w2 = np.multiply(velocity_mat[:, 1], np.sin((1-Itensor[2][2]/Itensor[0][0])*velocity_mat[:, 2]))
+w3 = velocity_mat[:, 2]
+
+time = np.append(time, time[-1] + dt)
+print(len(time))
+
+print(-velocity_mat[:, 1])
+
+fig, ax = plt.subplots(3,2)
+ax[0][0].plot(time, (velocity_mat[:, 0]))
+ax[1][0].plot(time, (velocity_mat[:, 1]))
+ax[2][0].plot(time, (velocity_mat[:, 2]))
+ax[0][1].plot(time, w1)
+ax[1][1].plot(time, w2)
+ax[2][1].plot((velocity_mat[:, 1]), (velocity_mat[:, 0]))
+fig.suptitle("Numerically integrated (left) Solved (right)")
 plt.show()
+'''
+for i in range(len(time)):
+    ax.quiver(0,0,0, attitude_mat[i, 0, 0], inertial_mat[i, 1, 0], inertial_mat[i, 2, 0])
+    plt.draw()
+    plt.pause(0.001)
+'''
