@@ -24,7 +24,7 @@ def RK45_step(w, M, Idiag, time, deltat):
 
 
 # variables
-dt = 0.001
+dt = 0.1
 time = np.arange(0, 100, dt)
 
 Itensor = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 2]])  # kg*m^2
@@ -39,15 +39,7 @@ inertial_mat = np.empty((0, 3, 3), float)
 velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
 attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
 inertial_mat = np.append(inertial_mat, [initial_inertial], axis=0)
-#quat = np.quaternion(1, 0, 0, 0)
 M = np.array([0, 0, 0])
-
-w0 = 1
-
-
-
-print(velocity_mat)
-print(RK45_step(velocity_mat[-1], M, Itensor, time, dt))
 
 
 
