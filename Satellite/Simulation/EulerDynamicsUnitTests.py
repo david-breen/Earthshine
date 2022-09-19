@@ -13,7 +13,7 @@ time = np.arange(0, 100, dt)
 
 # initial conditions
 Itensor = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 2]])  # kg*m^2
-initial_velocity = np.array([3, 0, 2], float)
+initial_velocity = np.array([0, 0, 0], float)
 initial_attitude = np.array([0, 0, 0, 1], float)
 M = np.array([0, 0, 0])
 
@@ -29,8 +29,11 @@ display_vect = [1, 0, 0]
 
 
 for t in time:
-    
-    #print(RK45_step(state_mat[-1][0], M, Itensor, t, dt, state_mat[-1][1]))
+
+    if t < 1:
+        M = np.array([15, 0, 4])
+    else:
+        M = np.array([0, 0, 0])
 
     w_hold, Q_hold = RK45_step(velocity_mat[-1], M, Itensor, t, dt,
                                 attitude_mat[-1])
@@ -46,13 +49,18 @@ time = np.append(time, time[-1] + dt)
 
 fig, ax = plt.subplots(3, 2)
 ax[0][0].plot(time, velocity_mat[:, 0])
+ax[0][0].set_title("Numerical integration")
 ax[1][0].plot(time, velocity_mat[:, 1])
 ax[2][0].plot(time, velocity_mat[:, 2])
+ax[2][0].set_title("w3 Velocity")
 
 ax[0][1].plot(time, 3 * np.cos(bigO * time))
+ax[0][1].set_title("Analytical integration")
 ax[1][1].plot(time, 3 * np.sin(bigO * time) )
+
 ax[2][1].plot(velocity_mat[:, 0], velocity_mat[:, 1])
 ax[2][1].plot(3 * np.cos(bigO * time), 3 * np.sin(bigO * time))
+ax[2][1].set_title("f(w1,w2,t)")
 
-fig.suptitle("Numerically integrated (left) Solved (right)")
+fig.suptitle("Numerically integrated vs Analytical Solutions for λ1=λ2 > λ3")
 plt.show()
