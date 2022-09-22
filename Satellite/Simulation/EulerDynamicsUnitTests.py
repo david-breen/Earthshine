@@ -7,44 +7,38 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from EulerDynamicsDeriver import *
 
 
+
 # Time stuff
-dt = 0.1
-time = np.arange(0, 100, dt)
+run_time = 5
+dt = 0.01
 
 # initial conditions
-Itensor = np.array([[5, 0, 0], [0, 5, 0], [0, 0, 2]])  # kg*m^2
-initial_velocity = np.array([0, 0, 0], float)
-initial_attitude = np.array([0, 0, 0, 1], float)
-M = np.array([0, 0, 0])
-
-# Matrix initalization
-
-velocity_mat = np.empty((0, 3), float)
-attitude_mat = np.empty((0, 4), float)
-
-velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
-attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
-
-display_vect = [1, 0, 0]
+Itensor = np.array([5,
+                      5,
+                        2])  # kg*m^2
+initial_velocity = [0, 0, 5]
+initial_attitude = [0, 1, 0, 0] # this will eventually be cube verticies
+moments = [5, 0, 0]
 
 
-for t in time:
+velocity_mat, attitude_mat = simulate_dynamics(Itensor, initial_velocity,
+                                               initial_attitude, moments,
+                                               run_time, dt, just_last=False)
 
-    if t < 1:
-        M = np.array([15, 0, 4])
-    else:
-        M = np.array([0, 0, 0])
+moments = [0, 0, 0]
 
-    w_hold, Q_hold = RK45_step(velocity_mat[-1], M, Itensor, t, dt,
-                                attitude_mat[-1])
-
-    velocity_mat = np.append(velocity_mat, [w_hold] , axis=0)
-    attitude_mat = np.append(attitude_mat, [Q_hold], axis=0)
+velocity_mat2, attitude_mat2 = simulate_dynamics(Itensor, velocity_mat[-1],
+                                               attitude_mat[-1], moments,
+                                               run_time, dt, just_last=False)
 
 
-bigO = ((Itensor[2][2]-Itensor[0][0])/Itensor[0][0])*2
+velocity_mat = np.append(velocity_mat, velocity_mat2, axis=0)
 
-time = np.append(time, time[-1] + dt)
+
+bigO = ((Itensor[2]-Itensor[0])/Itensor[0])*2
+
+
+time = np.arange(0, (run_time + dt)*2, dt)
 
 
 fig, ax = plt.subplots(3, 2)
