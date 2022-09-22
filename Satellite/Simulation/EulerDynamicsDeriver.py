@@ -10,6 +10,32 @@ def Euler_motion(w, M, Idiag, t):
 	return wdhold
 
 
+def w_to_Qdot(w, quat):
+
+    
+    rot = R.from_quat(quat)
+    rot = rot.as_matrix()
+    Qdot = rot * w
+    rot = R.from_matrix(Qdot)
+    Qdot = rot.as_quat()
+    
+
+    Rq = np.array([[1-(2*quat[2]**2)-(2*quat[3]**2), 
+                    2*quat[1]*quat[2]-2*quat[0]*quat[3], 
+                    2*quat[1]*quat[3]+2*quat[0]*quat[2]], 
+                    
+                    [2*quat[1]*quat[2]+2*quat[0]*quat[3], 
+                     1-(2*quat[1]**2)-(2*quat[3]**2),
+                     2*quat[2]*quat[3]-2*quat[0]*quat[1]], 
+                    
+                    [2*quat[1]*quat[3]-2*quat[0]*quat[2],
+                     2*quat[2]*quat[3]+2*quat[0]*quat[1],
+                     1-(2*quat[1]**2)-(2*quat[2]**2)]],
+                     float)
+
+    return Qdot
+
+
 def RK45_step(w, M, Idiag, time, deltat, quat):
 
     kq1 = deltat * w_to_Qdot(w, quat)
@@ -27,17 +53,6 @@ def RK45_step(w, M, Idiag, time, deltat, quat):
     return new_w, new_Q
 
 
-def w_to_Qdot(w, quat):
-
-    rot = R.from_quat(quat)
-    rot = rot.as_matrix()
-    Qdot = rot * w
-    rot = R.from_matrix(Qdot)
-    Qdot = rot.as_quat()
-
-    return Qdot
-
-
 def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
                       just_last=True):
 
@@ -45,28 +60,34 @@ def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
     time = np.arange(0, run_time, dt)
 
     # initial conditions
-    initial_velocity = np.array([3, 0, 2], float)
-    initial_attitude = np.array([0, 1, 0, 0], float) # this will eventually be cube verticies
     Itensor = np.array([[I_diag[0], 0, 0], [0, I_diag[1], 0], [0, 0, I_diag[2]]])  # kg*m^2
     initial_velocity = np.array(init_velo, float)
     initial_attitude = np.array(attitude, float)
+    initial_rotation = np.array([1, 0, 0, 0], float)
+
     M = np.array(moments)
 
     # Matrix initalization
 
     velocity_mat = np.empty((0, 3), float)
-    attitude_mat = np.empty((0, 4), float)
+    rotation_mat = np.empty((0, 4), float)
+    attitude_mat = np.empty((0, 3), float)
 
     velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
+    rotation_mat = np.append(rotation_mat, [initial_rotation], axis=0)
     attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
 
     for t in time:
 
         w_hold, Q_hold = RK45_step(velocity_mat[-1], M, Itensor, time, dt,
-                                   attitude_mat[-1])
+                                   rotation_mat[-1])
 
         velocity_mat = np.append(velocity_mat, [w_hold] , axis=0)
-        attitude_mat = np.append(attitude_mat, [Q_hold], axis=0)
+        rotation_mat = np.append(rotation_mat, [Q_hold], axis=0)
+        #attitude_mat = np.append(attitude_mat, 
+         #                       [Q_hold *[0, attitude_mat[-1][0],
+         #                        attitude_mat[-1][1], attitude_mat[-1][2]] 
+         #                        * np.linalg.inv(Q_hold)], axis=0)
 
     if(just_last == False):
         return velocity_mat, attitude_mat
