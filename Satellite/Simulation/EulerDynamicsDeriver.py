@@ -1,3 +1,5 @@
+from locale import normalize
+import tracemalloc
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
@@ -10,16 +12,15 @@ def Euler_motion(w, M, Idiag, t):
 	return wdhold
 
 
-def w_to_Qdot(w, quat):
+def w_to_Qdot(velocity, quat):
+    '''
+    dot = np.dot(body, world)
+    w = np.cross(body, world)
 
+    rotation = np.append([dot + np.sqrt(dot*dot + np.dot(w,w))], w)
+    quat = rotation/np.linalg.norm(rotation)
+    '''
     
-    rot = R.from_quat(quat)
-    rot = rot.as_matrix()
-    Qdot = rot * w
-    rot = R.from_matrix(Qdot)
-    Qdot = rot.as_quat()
-    
-
     Rq = np.array([[1-(2*quat[2]**2)-(2*quat[3]**2), 
                     2*quat[1]*quat[2]-2*quat[0]*quat[3], 
                     2*quat[1]*quat[3]+2*quat[0]*quat[2]], 
@@ -33,22 +34,32 @@ def w_to_Qdot(w, quat):
                      1-(2*quat[1]**2)-(2*quat[2]**2)]],
                      float)
 
-    return Qdot
+    world_velocity = np.matmul(Rq, velocity)
+    v2 = [quat[1], quat[2], quat[3]]
+    qdot = np.append(-(np.matmul(world_velocity, v2)),
+                     (quat[0]*world_velocity)+
+                     np.cross(world_velocity,v2))
+
+    
+    return qdot
 
 
-def RK45_step(w, M, Idiag, time, deltat, quat):
+def RK45_step(w, M, Idiag, time, deltat, attitude_quat):
 
-    kq1 = deltat * w_to_Qdot(w, quat)
+    kq1 = deltat * w_to_Qdot(w, attitude_quat)
     kw1 = deltat * Euler_motion(w, M, Idiag, time)
-    kq2 = deltat * w_to_Qdot(w + kw1, quat + .5*kq1)
+    kq2 = deltat * w_to_Qdot(w + kw1, attitude_quat + .5*kq1)
     kw2 = deltat * Euler_motion(w + 0.5*kw1, M, Idiag, time + 0.5*deltat)
-    kq3 = deltat * w_to_Qdot(w + kw2, quat + .5*kq2)
+    kq3 = deltat * w_to_Qdot(w + kw2, attitude_quat + .5*kq2)
     kw3 = deltat * Euler_motion(w + 0.5*kw2, M, Idiag, time + 0.5*deltat)
-    kq4 = deltat * w_to_Qdot(w + kw3, quat + kq3)
+    kq4 = deltat * w_to_Qdot(w + kw3, attitude_quat + kq3)
     kw4 = deltat * Euler_motion(w + kw3, M, Idiag, time + deltat)
     new_w = w + ((kw1 + 2*kw2 + 2*kw3 + kw4) / 6)
-    new_Q = quat + ((kq1 + 2*kq2 + 2*kq3 + kq4) / 6)
-    new_Q = np.divide(new_Q, np.linalg.norm(new_Q))
+    new_Q = attitude_quat + ((kq1 + 2*kq2 + 2*kq3 + kq4) / 6)
+    new_Q = new_Q/np.linalg.norm(new_Q)
+    
+
+
 
     return new_w, new_Q
 
@@ -71,7 +82,7 @@ def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
 
     velocity_mat = np.empty((0, 3), float)
     rotation_mat = np.empty((0, 4), float)
-    attitude_mat = np.empty((0, 3), float)
+    attitude_mat = np.empty((0, 4), float)
 
     velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
     rotation_mat = np.append(rotation_mat, [initial_rotation], axis=0)
@@ -90,11 +101,12 @@ def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
          #                        * np.linalg.inv(Q_hold)], axis=0)
 
     if(just_last == False):
-        return velocity_mat, attitude_mat
+        return velocity_mat, rotation_mat
     else:
-        return velocity_mat[-1], attitude_mat[-1]
+        return velocity_mat[-1], rotation_mat[-1]
 
 
 if __name__ == "__main__":
 
     print("testing")
+    

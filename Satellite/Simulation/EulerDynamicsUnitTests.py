@@ -11,15 +11,15 @@ from EulerDynamicsDeriver import *
 if(__name__ == "__main__"):
 
   # Time stuff
-  run_time = 100
+  run_time = 1
   dt = 0.01
 
   # initial conditions
-  Itensor = np.array([5,
-                        5,
-                          2])  # kg*m^2
-  initial_velocity = [0.3, 0, 0.2]
-  initial_attitude = [1, 0, 0] # this will eventually be cube verticies
+  Itensor = np.array([1,
+                        1,
+                          1])  # kg*m^2
+  initial_velocity = [0, 0, (2*np.pi)/8]
+  initial_attitude = [1, 0, 0, 0] # this will eventually be cube verticies
   moments = [0, 0, 0]
 
 
@@ -49,7 +49,7 @@ if(__name__ == "__main__"):
     errorx = np.append(errorx, [3*np.cos(bigO * time[t])-velocity_mat[t][0]])
     errory = np.append(errory, [3*np.sin(bigO * time[t])-velocity_mat[t][1]])
   
-  print(errorx)
+  print(attitude_mat[-1])
 
   fig, ax = plt.subplots(3, 2)
   ax[0][0].plot(time, velocity_mat[:, 0])
