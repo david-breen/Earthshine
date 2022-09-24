@@ -1,5 +1,4 @@
 from locale import normalize
-import tracemalloc
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
@@ -81,29 +80,29 @@ def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
     # Matrix initalization
 
     velocity_mat = np.empty((0, 3), float)
-    rotation_mat = np.empty((0, 4), float)
+    attitude_mat = np.empty((0, 4), float)
     attitude_mat = np.empty((0, 4), float)
 
     velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
-    rotation_mat = np.append(rotation_mat, [initial_rotation], axis=0)
+    attitude_mat = np.append(attitude_mat, [initial_rotation], axis=0)
     attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
 
     for t in time:
 
         w_hold, Q_hold = RK45_step(velocity_mat[-1], M, Itensor, time, dt,
-                                   rotation_mat[-1])
+                                   attitude_mat[-1])
 
         velocity_mat = np.append(velocity_mat, [w_hold] , axis=0)
-        rotation_mat = np.append(rotation_mat, [Q_hold], axis=0)
+        attitude_mat = np.append(attitude_mat, [Q_hold], axis=0)
         #attitude_mat = np.append(attitude_mat, 
          #                       [Q_hold *[0, attitude_mat[-1][0],
          #                        attitude_mat[-1][1], attitude_mat[-1][2]] 
          #                        * np.linalg.inv(Q_hold)], axis=0)
 
     if(just_last == False):
-        return velocity_mat, rotation_mat
+        return velocity_mat, attitude_mat
     else:
-        return velocity_mat[-1], rotation_mat[-1]
+        return velocity_mat[-1], attitude_mat[-1]
 
 
 if __name__ == "__main__":
