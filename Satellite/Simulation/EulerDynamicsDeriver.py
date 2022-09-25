@@ -12,6 +12,7 @@ def Euler_motion(w, M, Idiag, t):
 
 
 def w_to_Qdot(velocity, quat):
+    
     '''
     dot = np.dot(body, world)
     w = np.cross(body, world)

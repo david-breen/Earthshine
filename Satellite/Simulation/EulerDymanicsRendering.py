@@ -1,3 +1,4 @@
+from math import atan2
 import pygame
 from pygame.locals import *
 from OpenGL.GL import *
@@ -7,18 +8,17 @@ from scipy.spatial.transform import Rotation as R
 from EulerDynamicsDeriver import *
 
 
+# Initial physical conditions to generate the verticies
 
 Itensor = np.array([2, 2, 5])  # kg*m^2
 trans_mat = np.diag(Itensor)
 
-
 verticies = np.reshape(np.mgrid[-1:2:2,-1:2:2,-1:2:2].T, (8,3))
-print(verticies)
 
 verticies = np.matmul(verticies, trans_mat)
 
 
-
+# Connections between the verticies
 edges = (
 
     (0,1), (0,2), (0,4), (3,2),
@@ -27,7 +27,7 @@ edges = (
 
 )
 
-
+# spacecraft function for drawing the new spacecraft
 def space_craft():
 
     glBegin(GL_LINES)
@@ -37,22 +37,32 @@ def space_craft():
 
     glEnd()
 
-
+#function to rotate the verticies by the new quat value
+# Q0-1 = Q0 * -Q1
 def quaternion_rotation(quat0, quat1):
+    
+    print(np.linalg.norm(quat1))
+    if (quat1[0]*quat0[0]) < 0:
+        quat0[1], quat0[2], quat0[3] = -quat0[1], -quat0[2], -quat0[3]
 
-    w0, x0, y0, z0 = quat0
-    w1, x1, y1, z1 = (-quat1)
-    
-    
-    
-    r0, r1, r2, r3 = np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
-                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
-                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
-                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
+    a1, b1, c1, d1 = quat0
+    b1, c1, d1 = -b1, -c1, -d1
+    a2, b2, c2, d2 = quat1
 
+   
+
+    # this is just the hamiltonian product
+    r0, r1, r2, r3 = np.array([a1*a2 - b1*b2 - c1*c2 - d1*d2,
+                               a1*b2 + b1*a2 + c1*d2 - d1*c2,
+                               a1*c2 - b1*d2 + c1*a2 + d1*b2,
+                               d1*a2 + b1*c2 - c1*b2 + d1*a2
+                              ], dtype=np.float64)
+    
+    # find the vector and angle to rotate about
     normal = np.linalg.norm([r1,r2,r3])
     r_vector = np.divide([r1, r2, r3], normal)
-    theta = 2* np.arctan2(normal, r0)
+    theta = np.degrees(2* np.arccos(r0))
+
     return np.append(theta, r_vector)
 
 
@@ -62,33 +72,43 @@ def main():
     pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
 
     gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
-
     glTranslate(0.0, 0.0, -20)
-
     glRotatef(0, 0, 0, 0)
 
-
     # Time stuff
-    run_time = 0.1
-    dt = 0.001
+    run_time = 10 
+    dt = 0.01
 
     # initial conditions
-    Itensor = np.array([5,
-                          5,
-                            2])  # kg*m^2
-    initial_velocity = [1, 0, 2]
-    initial_attitude = [1, 0, 0, 0] # this will eventually be cube verticies
-    moments = [0, 0, 0]
+    initial_velocity = [0, 0, 2]    # rad/s
+    initial_attitude = [1, 0, 0, 0] # Unit quaternion orientation
+    moments = [0, 0, 0]     # Moments applied to the spacecraft in the B frame
 
 
-    while True:
+    velocity_mat, attitude_mat = simulate_dynamics(Itensor,
+                                                   initial_velocity,
+                                                   initial_attitude,
+                                                   moments,
+                                                   run_time,
+                                                   dt,
+                                                   just_last=False)
+
+
+    for t in  np.arange(1,1001):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-        velocity_mat, attitude_mat = simulate_dynamics(Itensor, initial_velocity,
-                                                initial_attitude, moments,
-                                                run_time, dt, just_last=True)
-        O, x, y ,z = quaternion_rotation(initial_attitude,attitude_mat)
+            if event.type == pygame.KEYDOWN & event.type == pygame.KEYUP:
+                               
+                if event.mod & pygame.K_w:
+                    print('Left shift was in a pressed state when this event '
+                            'occurred.')
+                
+        # function for simulating the dynamics at a time stepw
+
+        
+        O, x, y ,z = quaternion_rotation(attitude_mat[t-1],attitude_mat[t])
+        #print([O, x, y, z])
         glRotatef(O, x, y, z)
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         space_craft()
