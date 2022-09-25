@@ -2,38 +2,10 @@ from math import atan2
 import numpy as np
 from matplotlib import pyplot as plt
 from EulerDynamicsDeriver import *
+from EulerDynamicsRendering import *
 import unittest
 
 
-
-
-def quaternion_rotation(quat0, quat1):
-
-    a1, b1, c1, d1 = np.conjugate(quat0)
-    #b1, c1, d1 = -b1, -c1, -d1
-    a2, b2, c2, d2 = quat1
-
-    print([a1, b1, c1, d1])
-
-    # this is just the hamiltonian product
-    r0, r1, r2, r3 = np.array([a1*a2 - b1*b2 - c1*c2 - d1*d2,
-                               a1*b2 + b1*a2 + c1*d2 - d1*c2,
-                               a1*c2 - b1*d2 + c1*a2 + d1*b2,
-                               d1*a2 + b1*c2 - c1*b2 + d1*a2
-                              ], dtype=np.float64)
-    
-    # find the vector and angle to rotate about
-    theta = np.degrees(np.arccos(r0))
-    normal = np.linalg.norm([r1, r2, r3])
-    theta2 = np.arctan2(normal, r0)
-    if r1 == r2 == r3 == 0:
-        r_vector = [0, 0, 0]
-    else:
-      r_vector = np.divide([r1, r2, r3], np.sin(theta))
-
-    
-
-    return np.append(2*theta, r_vector)
 
 
 class TestDynamics(unittest.TestCase):

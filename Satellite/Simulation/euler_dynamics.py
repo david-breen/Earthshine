@@ -86,6 +86,34 @@ def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
         return velocity_mat[-1], attitude_mat[-1]
 
 
+#function to rotate the verticies by the new quat value
+# Q0-1 = Q0 * -Q1
+def quaternion_rotation(quat0, quat1):
+
+    a1, b1, c1, d1 = quat0
+    b1, c1, d1 = -b1, -c1, -d1
+    a2, b2, c2, d2 = quat1
+
+    # this is just the hamiltonian product
+    r0, r1, r2, r3 = np.array([a1*a2 - b1*b2 - c1*c2 - d1*d2,
+                               a1*b2 + b1*a2 + c1*d2 - d1*c2,
+                               a1*c2 - b1*d2 + c1*a2 + d1*b2,
+                               a1*d2 + b1*c2 - c1*b2 + d1*a2
+                              ], dtype=np.float64)
+    
+    # find the vector and angle to rotate about
+    normal = np.linalg.norm([r1, r2, r3])
+    theta = np.arctan2(normal, r0)
+
+    if normal == 0:
+        r_vector = [0, 0, 0]
+    else:
+        r_vector = np.divide([r1, r2, r3], np.sin(theta))
+
+    return np.append(np.degrees(2*theta), r_vector)
+
+
+
 if __name__ == "__main__":
 
     print("testing")
