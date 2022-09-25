@@ -1,32 +1,56 @@
-from cmath import cos
 from math import atan2
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 from matplotlib import pyplot as plt
-import matplotlib.animation as animation
-import mpl_toolkits.mplot3d.axes3d as p3
 from EulerDynamicsDeriver import *
+import unittest
+
+
 
 
 def quaternion_rotation(quat0, quat1):
 
-    w0, x0, y0, z0 = quat0
-    w1, x1, y1, z1 = (-quat1)
+    a1, b1, c1, d1 = np.conjugate(quat0)
+    #b1, c1, d1 = -b1, -c1, -d1
+    a2, b2, c2, d2 = quat1
+
+    print([a1, b1, c1, d1])
+
     # this is just the hamiltonian product
-    r0, r1, r2, r3 = np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
-                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
-                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
-                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
+    r0, r1, r2, r3 = np.array([a1*a2 - b1*b2 - c1*c2 - d1*d2,
+                               a1*b2 + b1*a2 + c1*d2 - d1*c2,
+                               a1*c2 - b1*d2 + c1*a2 + d1*b2,
+                               d1*a2 + b1*c2 - c1*b2 + d1*a2
+                              ], dtype=np.float64)
+    
     # find the vector and angle to rotate about
-    normal = np.linalg.norm([r1,r2,r3])
-    r_vector = np.divide([r1, r2, r3], normal)
-    theta = atan2(normal, r0)
-    return np.append(theta, r_vector)
+    theta = np.degrees(np.arccos(r0))
+    normal = np.linalg.norm([r1, r2, r3])
+    theta2 = np.arctan2(normal, r0)
+    if r1 == r2 == r3 == 0:
+        r_vector = [0, 0, 0]
+    else:
+      r_vector = np.divide([r1, r2, r3], np.sin(theta))
+
+    
+
+    return np.append(2*theta, r_vector)
+
+
+class TestDynamics(unittest.TestCase):
+  
+  def test_full_rotation(self):
+      rotation = quaternion_rotation([1,0,0,0],[0,0,0,1])
 
 
 
 if(__name__ == "__main__"):
 
+
+  print(quaternion_rotation([1,0,0,0],[0,0,0,1]))
+
+
+
+  '''
   # Time stuff
   run_time = 10
   dt = 0.1
@@ -60,7 +84,7 @@ if(__name__ == "__main__"):
     print("rotation")
     print(quaternion_rotation(attitude_mat[t-1],attitude_mat[t]))
   
-'''
+
   fig, ax = plt.subplots(3, 2)
   ax[0][0].plot(time, velocity_mat[:, 0])
   ax[0][0].set_title("Numerical integration")
@@ -79,3 +103,6 @@ if(__name__ == "__main__"):
   fig.suptitle("Numerically integrated vs Analytical Solutions for λ1=λ2 > λ3")
   plt.show()
 '''
+
+
+

@@ -13,14 +13,6 @@ def Euler_motion(w, M, Idiag, t):
 
 def w_to_Qdot(velocity, quat):
     
-    '''
-    dot = np.dot(body, world)
-    w = np.cross(body, world)
-
-    rotation = np.append([dot + np.sqrt(dot*dot + np.dot(w,w))], w)
-    quat = rotation/np.linalg.norm(rotation)
-    '''
-    
     Rq = np.array([[1-(2*quat[2]**2)-(2*quat[3]**2), 
                     2*quat[1]*quat[2]-2*quat[0]*quat[3], 
                     2*quat[1]*quat[3]+2*quat[0]*quat[2]], 
@@ -40,7 +32,6 @@ def w_to_Qdot(velocity, quat):
                      (quat[0]*world_velocity)+
                      np.cross(world_velocity,v2))
 
-    
     return qdot
 
 
@@ -58,9 +49,6 @@ def RK45_step(w, M, Idiag, time, deltat, attitude_quat):
     new_Q = attitude_quat + ((kq1 + 2*kq2 + 2*kq3 + kq4) / 6)
     new_Q = new_Q/np.linalg.norm(new_Q)
     
-
-
-
     return new_w, new_Q
 
 
@@ -74,18 +62,14 @@ def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
     Itensor = np.array([[I_diag[0], 0, 0], [0, I_diag[1], 0], [0, 0, I_diag[2]]])  # kg*m^2
     initial_velocity = np.array(init_velo, float)
     initial_attitude = np.array(attitude, float)
-    initial_rotation = np.array([1, 0, 0, 0], float)
 
     M = np.array(moments)
 
     # Matrix initalization
-
     velocity_mat = np.empty((0, 3), float)
-    attitude_mat = np.empty((0, 4), float)
     attitude_mat = np.empty((0, 4), float)
 
     velocity_mat = np.append(velocity_mat, [initial_velocity], axis=0)
-    attitude_mat = np.append(attitude_mat, [initial_rotation], axis=0)
     attitude_mat = np.append(attitude_mat, [initial_attitude], axis=0)
 
     for t in time:
@@ -95,10 +79,6 @@ def simulate_dynamics(I_diag, init_velo, attitude, moments, run_time, dt,
 
         velocity_mat = np.append(velocity_mat, [w_hold] , axis=0)
         attitude_mat = np.append(attitude_mat, [Q_hold], axis=0)
-        #attitude_mat = np.append(attitude_mat, 
-         #                       [Q_hold *[0, attitude_mat[-1][0],
-         #                        attitude_mat[-1][1], attitude_mat[-1][2]] 
-         #                        * np.linalg.inv(Q_hold)], axis=0)
 
     if(just_last == False):
         return velocity_mat, attitude_mat
