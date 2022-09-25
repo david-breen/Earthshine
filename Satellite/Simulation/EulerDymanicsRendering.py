@@ -62,6 +62,7 @@ def quaternion_rotation(quat0, quat1):
     normal = np.linalg.norm([r1,r2,r3])
     r_vector = np.divide([r1, r2, r3], normal)
     theta = np.degrees(2* np.arccos(r0))
+    print(theta)
 
     return np.append(theta, r_vector)
 
