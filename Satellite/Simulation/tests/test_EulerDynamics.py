@@ -1,8 +1,7 @@
 from math import atan2
 import numpy as np
 from matplotlib import pyplot as plt
-from EulerDynamicsDeriver import *
-from EulerDynamicsRendering import *
+from src import 
 import unittest
 
 
